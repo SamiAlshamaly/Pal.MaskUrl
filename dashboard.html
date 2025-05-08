@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - بيانات التتبع</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .info-box {
+            background-color: #e8f4ff;
+            border: 1px solid #b3d7ff;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 15px;
+            text-align: right;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .search {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .search input {
+            padding: 12px;
+            width: 400px;
+            border-radius: 30px;
+            border: 1px solid #ddd;
+            font-family: 'Tajawal', Arial, sans-serif;
+            font-size: 16px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .search input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #7f8c8d;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .home-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .home-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>لوحة التحكم - بيانات التتبع</h1>
+        
+        <div class="user-info">
+            <div class="username">مرحباً، {{ username }}</div>
+            <a href="/logout" class="logout-btn">تسجيل الخروج</a>
+        </div>
+        
+        <div class="info-box">
+            <p>عدد السجلات: <strong>{{ tracking_data|length }}</strong></p>
+            <div style="display: flex; gap: 10px;">
+                <a href="/" class="home-btn">العودة للصفحة الرئيسية</a>
+                {% if tracking_data and tracking_data|length > 0 %}
+                <button class="delete-all-btn" onclick="confirmDeleteAll()">حذف جميع البيانات</button>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="search">
+            <input type="text" id="searchInput" placeholder="بحث في البيانات..." onkeyup="filterTable()">
+        </div>
+        
+        {% if tracking_data and tracking_data|length > 0 %}
+        <table id="trackingTable">
+            <thead>
+                <tr>
+                    <th>الوقت</th>
+                    <th>عنوان IP</th>
+                    <th>نظام التشغيل</th>
+                    <th>المتصفح</th>
+                    <th>دقة الشاشة</th>
+                    <th>اللغة</th>
+                    <th>الموقع الجغرافي</th>
+                    <th>المصدر</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in tracking_data %}
+                <tr id="row-{{ item.id }}">
+                    <td>{{ item.timestamp }}</td>
+                    <td>{{ item.ip }}</td>
+                    <td>{{ item.os }}</td>
+                    <td>{{ item.browser }}</td>
+                    <td>{{ item.screen_resolution }}</td>
+                    <td>{{ item.language }}</td>
+                    <td>{{ item.location }}</td>
+                    <td>{{ item.referrer }}</td>
+                    <td>
+                        <button class="delete-btn" onclick="confirmDelete('{{ item.id }}')">حذف</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">
+            <p>لا توجد بيانات تتبع حتى الآن. قم بإنشاء رابط تتبع واختباره لجمع البيانات.</p>
+        </div>
+        {% endif %}
+        
+        <div class="footer">
+            تم التطوير بواسطة <a href="#">Sami Alshamaly</a> &copy; 2025
+        </div>
+    </div>
+    
+    <!-- نافذة تأكيد الحذف -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>تأكيد الحذف</h3>
+            <p id="deleteMessage">هل أنت متأكد من حذف هذا السجل؟</p>
+            <div class="modal-buttons">
+                <button id="confirmDeleteBtn" class="modal-confirm">نعم، حذف</button>
+                <button class="modal-cancel" onclick="closeModal()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // تصفية الجدول
+        function filterTable() {
+            const input = document.getElementById("searchInput");
+            const filter = input.value.toUpperCase();
+            const table = document.getElementById("trackingTable");
+            const rows = table.getElementsByTagName("tr");
+            
+            for (let i = 1; i < rows.length; i++) {
+                let found = false;
+                const cells = rows[i].getElementsByTagName("td");
+                
+                for (let j = 0; j < cells.length - 1; j++) { // تجاهل عمود الإجراءات
+                    const cell = cells[j];
+                    if (cell) {
+                        const textValue = cell.textContent || cell.innerText;
+                        if (textValue.toUpperCase().indexOf(filter) > -1) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                
+                rows[i].style.display = found ? "" : "none";
+            }
+        }
+        
+        // حذف سجل واحد
+        async function deleteRecord(id) {
+            try {
+                const response = await fetch(`/api/tracking/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    // إزالة الصف من الجدول
+                    const row = document.getElementById(`row-${id}`);
+                    if (row) {
+                        row.remove();
+                    }
+                    
+                    // تحديث عدد السجلات
+                    const countElement = document.querySelector('.info-box strong');
+                    if (countElement) {
+                        const currentCount = parseInt(countElement.textContent);
+                        countElement.textContent = currentCount - 1;
+                        
+                        // إذا لم تعد هناك سجلات، أعد تحميل الصفحة لعرض رسالة "لا توجد بيانات"
+                        if (currentCount - 1 <= 0) {
+                            window.location.reload();
+                        }
+                    }
+                } else {
+                    alert('حدث خطأ أثناء حذف السجل');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء حذف السجل');
+            }
+            
+            closeModal();
+        }
+        
+        // حذف جميع السجلات
+        async function deleteAllRecords() {
+            try {
+                const response = await fetch('/api/tracking', {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    // إعادة تحميل الصفحة
+                    window.location.reload();
+                } else {
+                    alert('حدث خطأ أثناء حذف جميع السجلات');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء حذف جميع السجلات');
+            }
+            
+            closeModal();
+        }
+        
+        // فتح نافذة تأكيد الحذف لسجل واحد
+        function confirmDelete(id) {
+            const modal = document.getElementById('deleteModal');
+            const message = document.getElementById('deleteMessage');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            message.textContent = 'هل أنت متأكد من حذف هذا السجل؟';
+            confirmBtn.onclick = () => deleteRecord(id);
+            
+            modal.style.display = 'block';
+        }
+        
+        // فتح نافذة تأكيد حذف جميع السجلات
+        function confirmDeleteAll() {
+            const modal = document.getElementById('deleteModal');
+            const message = document.getElementById('deleteMessage');
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            message.textContent = 'هل أنت متأكد من حذف جميع السجلات؟ لا يمكن التراجع عن هذا الإجراء.';
+            confirmBtn.onclick = deleteAllRecords;
+            
+            modal.style.display = 'block';
+        }
+        
+        // إغلاق نافذة التأكيد
+        function closeModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.style.display = 'none';
+        }
+        
+        // إغلاق النافذة عند النقر خارجها
+        window.onclick = function(event) {
+            const modal = document.getElementById('deleteModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>
