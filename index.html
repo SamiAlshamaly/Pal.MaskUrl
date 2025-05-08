@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام تتبع الروابط</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        input, button {
+            padding: 15px;
+            margin: 10px 0;
+            width: 100%;
+            box-sizing: border-box;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            font-family: 'Tajawal', Arial, sans-serif;
+            font-size: 16px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: none;
+            background-color: #f9f9f9;
+        }
+        #trackingUrl {
+            word-break: break-all;
+            padding: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+        }
+        .copy-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .copy-btn:hover {
+            background-color: #27ae60;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        .qr-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .qr-image {
+            max-width: 200px;
+            margin: 0 auto;
+            display: block;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: white;
+        }
+        
+        .download-btn {
+            background-color: #9b59b6;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .download-btn:hover {
+            background-color: #8e44ad;
+        }
+        
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>إنشاء رابط تتبع</h1>
+        <div>
+            <input type="url" id="originalUrl" placeholder="أدخل الرابط الأصلي هنا" required>
+            <button onclick="createTrackingLink()">إنشاء رابط</button>
+        </div>
+        <div id="result">
+            <h3>الرابط الجديد:</h3>
+            <p id="trackingUrl"></p>
+            <div class="buttons-container">
+                <button class="copy-btn" onclick="copyToClipboard()">نسخ الرابط</button>
+                <button class="download-btn" onclick="downloadQRCode()">تحميل رمز QR</button>
+            </div>
+            <div class="qr-container">
+                <h3>رمز QR للرابط:</h3>
+                <img id="qrImage" class="qr-image" alt="رمز QR للرابط">
+            </div>
+        </div>
+        
+        <div class="footer">
+            تم التطوير بواسطة <a href="#">Sami Alshamaly</a> &copy; 2025
+        </div>
+    </div>
+
+    <script>
+        let currentShortCode = '';
+        
+        async function createTrackingLink() {
+            const originalUrl = document.getElementById('originalUrl').value;
+            if (!originalUrl) {
+                alert('الرجاء إدخال رابط صحيح');
+                return;
+            }
+
+            try {
+                const response = await fetch('/create_link', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: originalUrl })
+                });
+
+                const data = await response.json();
+                
+                if (data.tracking_url) {
+                    document.getElementById('trackingUrl').textContent = data.tracking_url;
+                    document.getElementById('result').style.display = 'block';
+                    
+                    // عرض رمز QR
+                    if (data.qr_code) {
+                        document.getElementById('qrImage').src = 'data:image/png;base64,' + data.qr_code;
+                    } else {
+                        document.getElementById('qrImage').src = '/qrcode/' + data.short_code;
+                    }
+                    
+                    currentShortCode = data.short_code;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء إنشاء الرابط');
+            }
+        }
+        
+        function copyToClipboard() {
+            const trackingUrl = document.getElementById('trackingUrl').textContent;
+            navigator.clipboard.writeText(trackingUrl).then(() => {
+                alert('تم نسخ الرابط بنجاح!');
+            }).catch(err => {
+                console.error('فشل في نسخ الرابط: ', err);
+            });
+        }
+        
+        function downloadQRCode() {
+            if (!currentShortCode) return;
+            
+            // إنشاء رابط لتحميل الصورة
+            const downloadLink = document.createElement('a');
+            downloadLink.href = '/qrcode/' + currentShortCode;
+            downloadLink.download = 'qrcode-' + currentShortCode + '.png';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>
